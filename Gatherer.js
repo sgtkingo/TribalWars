@@ -15,9 +15,12 @@
 })();
 
 //Define global vars
-var gatheringTiers = {"Líní sběrači":8, "Běžní sběrači":4, "Chytří sběrači":2, "Velcí sběrači":1}
-var gatheringModes = {"fast":60, "optimal":120, "slow":240, "night":480}
-var unitsCapacity = {"light":80, "spear":25, "axe":10}
+const gatheringTiers = {"Líní sběrači":8, "Běžní sběrači":4, "Chytří sběrači":2, "Velcí sběrači":1}
+const gatheringModes = {"fast":60, "optimal":120, "slow":240, "night":480}
+const unitsCapacity = {"light":80, "spear":25, "axe":10}
+
+//Village info
+var availableArmy = {"light":0, "spear":0, "axe":0}
 
 //Settings
 /**
@@ -62,6 +65,25 @@ function getRandomInterval(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function pushUnitsToContainer(unit, amount, container)
+{
+    if( amount > availableArmy[unit] ){
+        amount = availableArmy[unit];
+    }
+    container.push(Object.freeze([unit, amount]));
+    availableArmy[unit] -= amount;
+}
+
+function getUnitRatio(unit)
+{
+    let totalAmout = 0;
+    for(let k in availableArmy){
+        totalAmout += availableArmy[k];
+    }
+    let ratio = availableArmy[unit] / totalAmout;
+    return ratio;
+}
+
 // Calculate units amount based on config
 function calculateUnits(config, tier)
 {
@@ -74,24 +96,35 @@ function calculateUnits(config, tier)
    //6400 == 60min
     let needed_capacity = 6400 * (mode/60) * gatheringTiers[tier];
     let needed_unit_amount = 0;
-    console.log(`\t\t(i)strategy:${strategy}, mode:${mode}, tier:${tier}, needed_capacity:${needed_capacity}...`);
+    let unit_ratio = 0.0;
+    console.log(`\t\t(i)Strategy:${strategy}, mode:${mode}, tier:${tier}, needed_capacity:${needed_capacity}...`);
+    console.log(`\t\t(i)Army status:${JSON.stringify(availableArmy, null, 0)}`);
 
     switch (strategy) {
         case 'auto':
-            needed_unit_amount = Math.ceil((needed_capacity/2.0)/unitsCapacity['axe']);
-            units.push(Object.freeze(['axe', needed_unit_amount]));
-            needed_unit_amount = Math.ceil((needed_capacity/2.0)/unitsCapacity['light']);
-            units.push(Object.freeze(['light', needed_unit_amount]));
+            for(let k in availableArmy){
+                unit_ratio = getUnitRatio(k);
+                needed_unit_amount = Math.ceil((needed_capacity*unit_ratio)/unitsCapacity[k]);
+                pushUnitsToContainer(k, needed_unit_amount, units);
+            }
             break;
         case 'predefined':
-            for(let k in predefinedUnits[tier])
-            {
-                units.push(Object.freeze([k, predefinedUnits[tier][k]]));
+            for(let k in predefinedUnits[tier]) {
+                needed_unit_amount = predefinedUnits[tier][k];
+                pushUnitsToContainer(k, needed_unit_amount, units);
             }
             break;
         case 'light':
             needed_unit_amount = Math.ceil(needed_capacity/unitsCapacity['light']);
-            units.push(Object.freeze(['light', needed_unit_amount]));
+            pushUnitsToContainer('light', needed_unit_amount, units);
+            break;
+        case 'axe':
+            needed_unit_amount = Math.ceil(needed_capacity/unitsCapacity['axe']);
+            pushUnitsToContainer('axe', needed_unit_amount, units);
+            break;
+        case 'spear':
+            needed_unit_amount = Math.ceil(needed_capacity/unitsCapacity['spear']);
+            pushUnitsToContainer('spear', needed_unit_amount, units);
             break;
         default:
             console.log(`Unknown strategy "${strategy}"`);
@@ -243,16 +276,33 @@ async function Autofinder(config) {
     });
 }
 
+function updateArmyStatus() {
+    for(unit in availableArmy){
+        // Select the element with class and data-unit attribute
+        let element = document.querySelector(`.units-entry-all.squad-village-required[data-unit="${unit}"]`);
+
+        if (element) {
+            let valueText = element.textContent.trim();  // Get the text content of the element
+            let numericValue = parseInt(valueText.replace(/[()]/g, ''), 10);  // Remove parentheses and convert to integer
+            availableArmy[unit] = numericValue; //Update army status
+        } else {
+            console.error(`Element ${unit} not found!`);
+        }
+    }
+    console.log(`(i)Army status updated - new status:${JSON.stringify(availableArmy, null, 0)}`);
+}
+
 async function Gathering(config=userConfig) {
+    //Update army status
+    updateArmyStatus();
+    await sleep(100);
     //Autogathering
-    /*
     try {
         let result = await Autofinder(config);
         console.log(result);
     } catch (error) {
         console.error(error);
     }
-    */
 
     // Schedule the next click with a preconfig randomize interval
     let mins = gatheringModes[config["mode"]]+getRandomInterval(5, 10);
@@ -260,4 +310,3 @@ async function Gathering(config=userConfig) {
     console.log(`(i)Next auto-gathering starts in ${mins} mins...`);
     setTimeout(Gathering, interval);
 }
-
