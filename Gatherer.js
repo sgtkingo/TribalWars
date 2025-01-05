@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gatherer
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-03
+// @version      2025-01-05
 // @description  try to take over the world!
 // @author       You
 // @match        https://cs100.divokekmeny.cz/game.php?village=10365&screen=place&mode=scavenge
@@ -45,7 +45,8 @@ var availableArmy = {"light":0, "spear":0, "axe":0}
  *   - `"auto"`: Automatically select the best available tiers.
  *   - `string[]`: An array of specific tiers (e.g., `["Běžní sběrači", "Chytří sběrači"]`).
  */
-var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":"auto"}
+//var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":"auto"}
+var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":["Běžní sběrači", "Chytří sběrači", "Velcí sběrači"]}
 var predefinedUnits = {"Líní sběrači":{"axe":1400, "light":60}, "Běžní sběrači":{"light":100}, "Chytří sběrači":{"light":50}, "Velcí sběrači":{"light":25}}
 
 //Define functions
@@ -239,7 +240,7 @@ async function startGathering(option)
 // Function to find and click the desired button
 async function Autofinder(config) {
     return new Promise(async resolve => {
-        console.log("(i)Searching for avaible gathering options...")
+        console.log("(>)Searching for avaible gathering options...")
         // Find all divs with the class "scavenge-option border-frame-gold-red"
         let scavengeOptions = document.querySelectorAll('.scavenge-option.border-frame-gold-red');
         for (let option of scavengeOptions) {  // Use `for...of` instead of `forEach`
@@ -252,7 +253,7 @@ async function Autofinder(config) {
                 console.log("\t\tignoring...");
             } else {
                 if (tier in gatheringTiers) {
-                    console.log(`\t(i)Starting gathering: ${tier}...`);
+                    console.log(`\t(>)Starting gathering: ${tier}...`);
                     // Prepare units
                     let units = calculateUnits(config, tier);
                     try {
@@ -272,11 +273,12 @@ async function Autofinder(config) {
                 }
             }
         }
-        resolve("(i)>Gathering cycle is DONE!");
+        resolve("(i)Gathering cycle is DONE!");
     });
 }
 
 function updateArmyStatus() {
+    console.log("(>)Updating army status...");
     for(unit in availableArmy){
         // Select the element with class and data-unit attribute
         let element = document.querySelector(`.units-entry-all.squad-village-required[data-unit="${unit}"]`);
@@ -293,6 +295,8 @@ function updateArmyStatus() {
 }
 
 async function Gathering(config=userConfig) {
+    //Script start
+    console.log(`(*)Gatherer triggered, config:${JSON.stringify(config, null, 0)}`);
     //Update army status
     updateArmyStatus();
     await sleep(100);
@@ -307,6 +311,6 @@ async function Gathering(config=userConfig) {
     // Schedule the next click with a preconfig randomize interval
     let mins = gatheringModes[config["mode"]]+getRandomInterval(5, 10);
     let interval = minsToMs(mins);
-    console.log(`(i)Next auto-gathering starts in ${mins} mins...`);
+    console.log(`(>)Next auto-gathering starts in ${mins} mins...`);
     setTimeout(Gathering, interval);
 }
