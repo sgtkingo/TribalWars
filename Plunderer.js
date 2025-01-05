@@ -23,6 +23,7 @@ var availableArmy = {"light":0, "spear":0, "axe":0}
 
 //Config
 const userConfig = {"mode":"optimal", "strategy":"auto"}
+const reserveUnits = {"light":200, "spear":500, "axe":1000}
 
 //Teplates
 var templateA = {"light":0, "spear":0, "axe":0, "potencial":0}
@@ -131,7 +132,7 @@ function checkAvaibleArmy(template)
     //Update avaible army 
     updateAvailableArmy(false);
     for(let unit in template){
-        if(template[unit] > availableArmy[unit]){
+        if(template[unit] > availableArmy[unit] || availableArmy[unit] <= reserveUnits[unit]){
             return false;
         }
     }
@@ -154,7 +155,7 @@ async function Autoplunder(config){
     
         for (let i = 2; i < rows.length; i++) {  // Start from 3rd row (0-indexed as 2)
             if( !checkAvaibleArmy(templateA) & !checkAvaibleArmy(templateB) ){
-                reject("(!) Not enought army to plundering!");
+                reject("(!) Not enought army, or limit reach, to plundering!");
                 return;
             }
             // Extract data from the current row
