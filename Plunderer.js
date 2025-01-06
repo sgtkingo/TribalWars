@@ -21,10 +21,11 @@ const plunderingModes = {"fast":60, "optimal":120, "slow":240, "custom":0}
 const serverTimezoneOffset = 1; // For UTC+1 (Central European Time)
 //Village info
 var availableArmy = {"light":0, "spear":0, "axe":0}
+var plunderedVillages = []
 
 //Config
-const userConfig = {"mode":"optimal", "strategy":"auto"}
-const reserveUnits = {"light":200, "spear":500, "axe":1000}
+const userConfig = {"mode":"fast", "strategy":"auto"}
+const reserveUnits = {"light":100, "spear":500, "axe":1000}
 
 //Teplates
 var templateA = {"light":0, "spear":0, "axe":0, "potencial":0}
@@ -157,6 +158,11 @@ function checkAvaibleArmy(template)
     //Update avaible army 
     updateAvailableArmy(false);
     for(let unit in template){
+        //Scip unused units
+        if( template[unit] == 0 ){
+            continue;
+        }
+
         if(template[unit] > availableArmy[unit] || availableArmy[unit] <= reserveUnits[unit]){
             return false;
         }
@@ -177,9 +183,14 @@ async function Autoplunder(config){
         if( rows.length <= 2 ){
             reject("(!) No villages to plundering!");
         }
+        //Autostop
+        if( rows.length-2 == plunderedVillages.length ){
+            reject("(i)All plunderers send, no new village to plunder!");
+            return;
+        }
     
         for (let i = 2; i < rows.length; i++) {  // Start from 3rd row (0-indexed as 2)
-            if( !checkAvaibleArmy(templateA) & !checkAvaibleArmy(templateB) ){
+            if( !checkAvaibleArmy(templateA) && !checkAvaibleArmy(templateB) ){
                 reject("(!) Not enought army, or limit reach, to plundering!");
                 return;
             }
@@ -194,6 +205,9 @@ async function Autoplunder(config){
             if(vilageInfo)
             {
                 vilageInfoText = vilageInfo.textContent.trim();
+            }
+            if(plunderedVillages.includes(vilageInfoText)){
+                continue;
             }
     
             // **1. Calculate `potencial_loot` (sum of resources in the 6th column)**
@@ -269,15 +283,17 @@ async function Autoplunder(config){
                     config["strategy"] = "auto";
                     break;
             }
+            plunderedVillages.push(vilageInfoText);
             await sleep(getRandomInterval(250, 500));  // Delay to simulate natural behavior
         }
-        resolve("(i)All plunderers send!");
+        resolve("\t(i)Plunderers wave send!");
     });
 }
 
 async function Plunderer(config=userConfig) {
     //Script start
     console.log(`(*)Plunderer triggered, config:${JSON.stringify(config, null, 0)}`);
+    plunderedVillages = []
     //Update templates status
     updatePlunderingTemplates();
     console.log("(i)Your reserve army limits are set to:", reserveUnits);
@@ -298,5 +314,7 @@ async function Plunderer(config=userConfig) {
     let mins = plunderingModes[config["mode"]]+getRandomInterval(5, 10);
     let interval = minsToMs(mins);
     console.log(`(>)Next auto-plunderer starts in ${mins} mins...`);
-    setTimeout(Plunderer, interval);
+    await sleep(interval);
+    location.reload();  // Refreshes the page
+    //setTimeout(Plunderer, interval);
 }

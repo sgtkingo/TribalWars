@@ -47,7 +47,7 @@ var availableArmy = {"light":0, "spear":0, "axe":0}
  */
 //var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":"auto"}
 var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":["Běžní sběrači", "Chytří sběrači", "Velcí sběrači"]}
-var predefinedUnits = {"Líní sběrači":{"axe":1400, "light":60}, "Běžní sběrači":{"light":100}, "Chytří sběrači":{"light":50}, "Velcí sběrači":{"light":25}}
+var predefinedUnits = {"Líní sběrači":{"axe":1400, "light":60}, "Běžní sběrači":{"light":100}, "Chytří sběrači":{"light":50}, "Velcí sběrači":{"light":30}}
 
 //Define functions
 // Sleep function that returns a promise resolved after a given time (in milliseconds)
@@ -279,7 +279,7 @@ async function Autofinder(config) {
 
 function updateArmyStatus() {
     console.log("(>)Updating army status...");
-    for(unit in availableArmy){
+    for(let unit in availableArmy){
         // Select the element with class and data-unit attribute
         let element = document.querySelector(`.units-entry-all.squad-village-required[data-unit="${unit}"]`);
 
@@ -312,5 +312,7 @@ async function Gathering(config=userConfig) {
     let mins = gatheringModes[config["mode"]]+getRandomInterval(5, 10);
     let interval = minsToMs(mins);
     console.log(`(>)Next auto-gathering starts in ${mins} mins...`);
-    setTimeout(Gathering, interval);
+    await sleep(interval);
+    location.reload();  // Refreshes the page
+    //setTimeout(Gathering, interval);
 }
