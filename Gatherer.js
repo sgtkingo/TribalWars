@@ -311,7 +311,9 @@ async function Gathering(config=userConfig) {
     // Schedule the next click with a preconfig randomize interval
     let mins = gatheringModes[config["mode"]]+getRandomInterval(5, 10);
     let interval = minsToMs(mins);
-    console.log(`(>)Next auto-gathering starts in ${mins} mins...`);
+    // Get the current UTC time
+    let now = new Date();
+    console.log(`(>)Next auto-gathering starts in ${mins} mins...`, now);
     await sleep(interval);
     location.reload();  // Refreshes the page
     //setTimeout(Gathering, interval);

@@ -313,7 +313,9 @@ async function Plunderer(config=userConfig) {
     // Schedule the next click with a preconfig randomize interval
     let mins = plunderingModes[config["mode"]]+getRandomInterval(5, 10);
     let interval = minsToMs(mins);
-    console.log(`(>)Next auto-plunderer starts in ${mins} mins...`);
+    // Get the current UTC time
+    let now = new Date();
+    console.log(`(>)Next auto-plunderer starts in ${mins} mins...`, now);
     await sleep(interval);
     location.reload();  // Refreshes the page
     //setTimeout(Plunderer, interval);
