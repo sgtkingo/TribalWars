@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Plunderer
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-05
+// @version      2025-01-06
 // @description  try to take over the world!
 // @author       You
 // @match        https://cs100.divokekmeny.cz/game.php?village=10365&screen=am_farm
@@ -18,6 +18,7 @@
 
 //Global vars
 const plunderingModes = {"fast":60, "optimal":120, "slow":240, "custom":0}
+const serverTimezoneOffset = 1; // For UTC+1 (Central European Time)
 //Village info
 var availableArmy = {"light":0, "spear":0, "axe":0}
 
@@ -28,6 +29,30 @@ const reserveUnits = {"light":200, "spear":500, "axe":1000}
 //Teplates
 var templateA = {"light":0, "spear":0, "axe":0, "potencial":0}
 var templateB = {"light":0, "spear":0, "axe":0, "potencial":0}
+
+/**
+ * Function to detect if it is night (00:00 to 06:00) in a specific timezone.
+ * @param {number} timezoneOffset - The timezone offset in hours (e.g., +1 for UTC+1, -5 for UTC-5).
+ * @returns {boolean} - Returns true if it's night, false otherwise.
+ */
+function isNight(timezoneOffset) {
+    // Get the current UTC time
+    let now = new Date();
+    let utcHours = now.getUTCHours();  // Current hour in UTC
+
+    // Convert UTC time to local time in the given timezone
+    let localHours = utcHours + timezoneOffset;
+
+    // Handle overflow of hours (e.g., negative or above 24)
+    if (localHours < 0) {
+        localHours += 24;
+    } else if (localHours >= 24) {
+        localHours -= 24;
+    }
+
+    // Return true if time is between 00:00 and 06:00
+    return localHours >= 0 && localHours < 6;
+}
 
 //Define functions
 // Sleep function that returns a promise resolved after a given time (in milliseconds)
@@ -206,13 +231,43 @@ async function Autoplunder(config){
                 console.warn(`(!)Buttons A or B not found in row ${i + 1}`);
                 continue;
             }
-    
-            if ((potencial_loot <= templateA["potencial"] * 2) & checkAvaibleArmy(templateA)) {
-                console.log(`\t\t\t >Sending A to vilagge ${vilageInfoText}`);
-                buttonA.click();  // Click button A if loot is within 2x the potential of template A
-            } else {
-                console.log(`\t\t\t >Sending B to vilagge ${vilageInfoText}`);
-                buttonB.click();  // Click button B if loot exceeds 2x the potential of template A
+            
+            switch(config["strategy"])
+            {
+                case "A":
+                    console.error("(!)Strategy A is not implemented yet!");
+                    break;
+                case "B":
+                    console.error("(!)Strategy A is not implemented yet!");
+                    break;
+                case "auto":
+                    if(isNight(serverTimezoneOffset) & checkAvaibleArmy(templateB)){
+                        console.log("\t\t\t(•)Night time, using strategy B...");
+                        console.log(`\t\t\t>Sending B to vilagge ${vilageInfoText}`);
+                        buttonB.click();  // Click button B 
+                    }
+                    else
+                    {
+                        console.log("\t\t\t(○)Day time, using strategy A...");
+                        console.log(`\t\t\t>Sending A to vilagge ${vilageInfoText}`);
+                        buttonA.click();  // Click button A
+                    }
+                    break;
+                case "loot":
+                    if ((potencial_loot <= templateA["potencial"] * 2) & checkAvaibleArmy(templateA)) {
+                        console.log("\t\t\t Potencial loot is low, using strategy A...");
+                        console.log(`\t\t\t >Sending A to vilagge ${vilageInfoText}`);
+                        buttonA.click();  // Click button A if loot is within 2x the potential of template A
+                    } else {
+                        console.log("\t\t\t Potencial loot is high, using strategy B...");
+                        console.log(`\t\t\t >Sending B to vilagge ${vilageInfoText}`);
+                        buttonB.click();  // Click button B if loot exceeds 2x the potential of template A
+                    }
+                    break;
+                default:
+                    console.error("(!)Unknown stragety, switching to auto...");
+                    config["strategy"] = "auto";
+                    break;
             }
             await sleep(getRandomInterval(250, 500));  // Delay to simulate natural behavior
         }
@@ -225,6 +280,7 @@ async function Plunderer(config=userConfig) {
     console.log(`(*)Plunderer triggered, config:${JSON.stringify(config, null, 0)}`);
     //Update templates status
     updatePlunderingTemplates();
+    console.log("(i)Your reserve army limits are set to:", reserveUnits);
     await sleep(100);
 
     //Autoplundering
