@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gatherer
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-05
+// @version      2025-01-08
 // @description  try to take over the world!
 // @author       You
 // @match        https://cs100.divokekmeny.cz/game.php?village=10365&screen=place&mode=scavenge
@@ -16,11 +16,11 @@
 
 //Define global vars
 const gatheringTiers = {"Líní sběrači":8, "Běžní sběrači":4, "Chytří sběrači":2, "Velcí sběrači":1}
-const gatheringModes = {"fast":60, "optimal":120, "slow":240, "night":480}
+const gatheringModes = {"fast":60, "optimal":120, "slow":240, "night":480, "custom":0}
 const unitsCapacity = {"light":80, "spear":25, "axe":10}
 
 //Village info
-var availableArmy = {"light":0, "spear":0, "axe":0}
+var availableArmy = {"light":0, "spear":0, "axe":0, "sword":0}
 
 //Settings
 /**
@@ -296,7 +296,7 @@ function updateArmyStatus() {
 
 async function Gathering(config=userConfig) {
     //Script start
-    console.log(`(*)Gatherer triggered, config:${JSON.stringify(config, null, 0)}`);
+    console.log("(*)Gatherer triggered, config:", config);
     //Update army status
     updateArmyStatus();
     await sleep(100);

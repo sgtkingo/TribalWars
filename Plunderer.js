@@ -17,7 +17,7 @@
 })();
 
 //Global vars
-const plunderingModes = {"fast":60, "optimal":120, "slow":240, "custom":0}
+const plunderingModes = {"fast":30, "optimal":60, "slow":120, "custom":0}
 const serverTimezoneOffset = 1; // For UTC+1 (Central European Time)
 //Village info
 var availableArmy = {"light":0, "spear":0, "axe":0}
@@ -292,7 +292,7 @@ async function Autoplunder(config){
 
 async function Plunderer(config=userConfig) {
     //Script start
-    console.log(`(*)Plunderer triggered, config:${JSON.stringify(config, null, 0)}`);
+    console.log("(*)Plunderer triggered, config:", config);
     plunderedVillages = []
     //Update templates status
     updatePlunderingTemplates();
@@ -301,17 +301,15 @@ async function Plunderer(config=userConfig) {
 
     //Autoplundering
     try {
-        while(1){
-            let result = await Autoplunder(config);
-            console.log(result);
-            await sleep(1000);
-        }
+        let result = await Autoplunder(config);
+        console.log(result);
+        await sleep(1000);
     } catch (error) {
         console.error(error);
     }
 
     // Schedule the next click with a preconfig randomize interval
-    let mins = plunderingModes[config["mode"]]+getRandomInterval(5, 10);
+    let mins = plunderingModes[config["mode"]]+getRandomInterval(1, 5);
     let interval = minsToMs(mins);
     // Get the current UTC time
     let now = new Date();
