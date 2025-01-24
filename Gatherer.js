@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gatherer
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-08
+// @version      2025-01-23
 // @description  try to take over the world!
 // @author       You
 // @match        https://cs100.divokekmeny.cz/game.php?village=10365&screen=place&mode=scavenge
@@ -47,7 +47,7 @@ var availableArmy = {"light":0, "spear":0, "axe":0, "sword":0}
  */
 //var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":"auto"}
 var userConfig = {"mode":"optimal", "strategy":"predefined", "tiers":["Běžní sběrači", "Chytří sběrači", "Velcí sběrači"]}
-var predefinedUnits = {"Líní sběrači":{"axe":1400, "light":60}, "Běžní sběrači":{"light":100}, "Chytří sběrači":{"light":50}, "Velcí sběrači":{"light":30}}
+var predefinedUnits = {"Líní sběrači":{"light":0, "spear":0, "axe":0, "sword":0}, "Běžní sběrači":{"light":0, "spear":0, "axe":0, "sword":0}, "Chytří sběrači":{"light":0, "spear":0, "axe":0, "sword":0}, "Velcí sběrači":{"light":0, "spear":0, "axe":0, "sword":0}}
 
 //Define functions
 // Sleep function that returns a promise resolved after a given time (in milliseconds)
@@ -68,7 +68,10 @@ function getRandomInterval(min, max) {
 
 function pushUnitsToContainer(unit, amount, container)
 {
-    if( amount > availableArmy[unit] ){
+    if( amount.toString().search("%") !== -1 ){
+        amount = Math.ceil(availableArmy[unit] * parseInt(amount) / 100);
+    }
+    if( amount > availableArmy[unit] || amount === "*"){
         amount = availableArmy[unit];
     }
     container.push(Object.freeze([unit, amount]));

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Plunderer
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-06
+// @version      2025-01-23
 // @description  try to take over the world!
 // @author       You
 // @match        https://cs100.divokekmeny.cz/game.php?village=10365&screen=am_farm
@@ -20,16 +20,16 @@
 const plunderingModes = {"fast":30, "optimal":60, "slow":120, "custom":0}
 const serverTimezoneOffset = 1; // For UTC+1 (Central European Time)
 //Village info
-var availableArmy = {"light":0, "spear":0, "axe":0}
+var availableArmy = {"light":0, "spear":0, "axe":0, "spy":0}
 var plunderedVillages = []
 
 //Config
 const userConfig = {"mode":"fast", "strategy":"auto"}
-const reserveUnits = {"light":100, "spear":500, "axe":1000}
+const reserveUnits = {"light":0, "spear":0, "axe":0, "spy":0}
 
 //Teplates
-var templateA = {"light":0, "spear":0, "axe":0, "potencial":0}
-var templateB = {"light":0, "spear":0, "axe":0, "potencial":0}
+var templateA = {"light":0, "spear":0, "axe":0, "spy":0, "potencial":0}
+var templateB = {"light":0, "spear":0, "axe":0, "spy":0, "potencial":0}
 
 /**
  * Function to detect if it is night (00:00 to 06:00) in a specific timezone.
@@ -95,9 +95,6 @@ function updatePlunderingTemplates() {
     console.log("\t*Template B:", templateB);
 }
 
-// Dictionary to store available army in the village
-var availableArmy = {"light": 0, "spear": 0, "axe": 0};
-
 // Function to update availableArmy from the table
 function updateAvailableArmy(log=true) {
     if(log){
@@ -159,11 +156,17 @@ function checkAvaibleArmy(template)
     updateAvailableArmy(false);
     for(let unit in template){
         //Scip unused units
-        if( template[unit] == 0 ){
+        if( template[unit] == 0 || template[unit] == undefined ){
             continue;
         }
 
-        if(template[unit] > availableArmy[unit] || availableArmy[unit] <= reserveUnits[unit]){
+        let reserve_unit_amount = reserveUnits[unit];
+        if( reserve_unit_amount.toString().search("%") !== -1 ){
+            reserve_unit_amount = Math.ceil(availableArmy[unit] * parseInt(reserve_unit_amount) / 100);
+            console.log(`\t\t\t>Reserve for ${unit} is set to ${reserve_unit_amount}`);
+        }
+
+        if(template[unit] > availableArmy[unit] || availableArmy[unit] <= reserve_unit_amount){
             return false;
         }
     }
